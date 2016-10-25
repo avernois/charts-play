@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+
+    <script>
+
+    var options = {
+        chart: {
+            renderTo: 'chart',
+            type: 'spline'
+        },
+        xAxis: {
+                type: 'datetime'
+        },
+        yAxis: [{
+                  title: {
+                    text: 'Humidity'
+                  }
+                }, { 
+                  title: {
+                    text: 'Temperature'
+                  },
+                  opposite: true
+                }],
+        series: [{
+                    name: "Humidity dht22",
+                    yAxis: 0,
+                    data: []
+                  },
+                  {
+                    name: "Temperature dht22",
+                    yAxis: 1,
+                    data: []
+                  },
+                  {
+                    name: "Humidity si7021",
+                    yAxis: 0,
+                    data: []
+                  },
+                  {
+                    name: "Temperature si7021",
+                    yAxis: 1,
+                    data: []
+                  }
+                ]
+      };
+
+
+$(document).ready(function() {
+      
+      var public_key = "4JW7ayaMXMUzwjo2Dmg0";
+      var jsonData = $.ajax({
+          url: 'https://data.sparkfun.com/output/' + public_key + '.json',
+          data: {'gte' :{'timestamp' : 'now - 10 days'}},
+          dataType: 'jsonp',
+      }).done(function (results) {
+          $.each(results, function (i, row) {
+            date = Date.parse(row.timestamp);
+            options.series[0].data.push([date, parseFloat(row.humidity_dht22)]);
+            options.series[1].data.push([date, parseFloat(row.temp_dht22)]);
+            options.series[2].data.push([date, parseFloat(row.humidity_si7021)]);
+            options.series[3].data.push([date, parseFloat(row.temp_si7021)]);
+          });
+          options.series[0].data.reverse();
+          options.series[1].data.reverse();
+          options.series[2].data.reverse();
+          options.series[3].data.reverse();
+          var chart = new Highcharts.Chart(options);
+        });
+    });
+
+    </script>
+
+  </head>
+  <body>
+    <div id="chart" style="width: 100%;"></div>
+  </body>
+</html>
+
