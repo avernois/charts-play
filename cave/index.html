@@ -3,11 +3,10 @@
     <meta charset="UTF-8">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="dark-unica.js"></script>
 
 <style>
 .chart {
-    min-width: 320px;
-    max-width: 800px;
     height: 220px;
     margin: 0 auto;
 }
@@ -18,7 +17,13 @@
 
 
 <script>
-var public_key = "4JW7ayaMXMUzwjo2Dmg0";
+var channel_id = 211219 ;
+var param = parseInt(window.location.hash.substring(1));
+var numberOfDays = isNaN(param) ? 7 : param;
+  
+var dataSample = numberOfDays * 30 * 24;
+  console.log(dataSample)
+
 $(function () {
 
     /**
@@ -78,13 +83,19 @@ $(function () {
 
     activity = {
     "datasets": [{
-        "name": "Humidity si7021",
+        "name": "Humidity dht22",
         "data": [],
         "unit": "%",
         "type": "line",
         "valueDecimals": 1
     }, {
-        "name": "Humidity dht22",
+        "name": "Temp dht22",
+        "data": [],
+        "unit": '°C',
+        "type": "line",
+        "valueDecimals": 1
+    }, {
+        "name": "Humidity si7021",
         "data": [],
         "unit": "%",
         "type": "line",
@@ -95,28 +106,19 @@ $(function () {
         "unit": '°C',
         "type": "line",
         "valueDecimals": 1
-    }, {
-        "name": "Temp dht22",
-        "data": [],
-        "unit": '°C',
-        "type": "line",
-        "valueDecimals": 1
     }]}
 
-
-
     var jsonData = $.ajax({
-          url: 'https://data.sparkfun.com/output/' + public_key + '.json',
-          data: {'gte' :{'timestamp' : 'now - 7 days'}},
+          url: 'https://api.thingspeak.com/channels/' + channel_id + '/feeds.json?results=' + dataSample,
           dataType: 'jsonp',
       }).done(function (results) {
-          $.each(results, function (i, row) {
-            date = Date.parse(row.timestamp);
-            if (row.temp_dht22 > -999) {
-                activity.datasets[1].data.unshift([date, parseFloat(row.humidity_dht22)]);
-                activity.datasets[3].data.unshift([date, parseFloat(row.temp_dht22)]);
-                activity.datasets[0].data.unshift([date, parseFloat(row.humidity_si7021)]);
-                activity.datasets[2].data.unshift([date, parseFloat(row.temp_si7021)]);
+          $.each(results.feeds, function (i, row) {
+            date = Date.parse(row.created_at);
+            if (row.field3 > -999) {
+                activity.datasets[0].data.push([date, parseFloat(row.field1)]);
+                activity.datasets[1].data.push([date, parseFloat(row.field3)]);
+                activity.datasets[2].data.push([date, parseFloat(row.field2)]);
+                activity.datasets[3].data.push([date, parseFloat(row.field4)]);
             }
           });
 
@@ -191,6 +193,6 @@ $(function () {
 
 </head>
 
-<body>
-<div id="container"></div>
+<body bgcolor="#3e3e40">
+    <div id="container"></div>
 </body>
