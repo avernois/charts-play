@@ -1,0 +1,213 @@
+<!DOCTYPE htmlC>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="dark-unica.js"></script>
+
+<style>
+.chart {
+    height: 300px;
+    margin: 0 auto;
+}
+</style>
+<!-- http://doc.jsfiddle.net/use/hacks.html#css-panel-hack -->
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<script>
+  var param = parseInt(window.location.hash.substring(1));
+  var numberOfDays = isNaN(param) ? 1 : param;
+  
+  var dataSample = numberOfDays * 6 * 24;
+  console.log(dataSample)
+
+  // variables for the first series
+  var channel_id = 199616;
+
+$(function () {
+
+    /**
+     * In order to synchronize tooltips and crosshairs, override the
+     * built-in events with handlers defined on the parent element.
+     */
+    $('#container').bind('mousemove touchmove touchstart', function (e) {
+        var chart,
+            point,
+            i,
+            event;
+
+        for (i = 0; i < Highcharts.charts.length; i = i + 1) {
+            chart = Highcharts.charts[i];
+            event = chart.pointer.normalize(e.originalEvent); // Find coordinates within the chart
+            point = chart.series[0].searchPoint(event, true); // Get the hovered point
+
+            if (point) {
+                point.highlight(e);
+            }
+        }
+    });
+    /**
+     * Override the reset function, we don't need to hide the tooltips and crosshairs.
+     */
+    Highcharts.Pointer.prototype.reset = function () {
+        return undefined;
+    };
+
+    /**
+     * Highlight a point by showing tooltip, setting hover state and draw crosshair
+     */
+    Highcharts.Point.prototype.highlight = function (event) {
+        this.onMouseOver(); // Show the hover marker
+        this.series.chart.tooltip.refresh(this); // Show the tooltip
+        this.series.chart.xAxis[0].drawCrosshair(event, this); // Show the crosshair
+    };
+
+    /**
+     * Synchronize zooming through the setExtremes event handler.
+     */
+    function syncExtremes(e) {
+        var thisChart = this.chart;
+
+        if (e.trigger !== 'syncExtremes') { // Prevent feedback loop
+            Highcharts.each(Highcharts.charts, function (chart) {
+                if (chart !== thisChart) {
+                    if (chart.xAxis[0].setExtremes) { // It is null while updating
+                        chart.xAxis[0].setExtremes(e.min, e.max, undefined, false, { trigger: 'syncExtremes' });
+                    }
+                }
+            });
+        }
+    }
+
+
+
+    activity = {
+    "datasets": [{
+        "name": "temp",
+        "data": [],
+        "unit": '°C',
+        "type": "line",
+        "valueDecimals": 1
+    }, {
+        "name": "humidity",
+        "data": [],
+        "unit": "%",
+        "type": "line",
+        "valueDecimals": 1
+    }, {
+        "name": "in",
+        "data": [],
+        "unit": 'V',
+        "type": "line",
+        "valueDecimals": 1
+    }]}
+
+  var my_offset = new Date().getTimezoneOffset();
+  function getChartDate(d) {
+    // offset in minutes is converted to milliseconds and subtracted so that chart's x-axis is correct
+    return Date.parse(d) - (my_offset * 60000);
+  }
+
+
+    var jsonData = $.ajax({
+          url: 'https://api.thingspeak.com/channels/' + channel_id + '/feeds.json?results=' + dataSample,
+          dataType: 'jsonp'
+      }).done(function (results) {
+          $.each(results.feeds, function (i, row) {
+            date = getChartDate(row.created_at);
+            console.log(date + " " + row.field1 + " " + row.field2 + " " + row.field3)
+            
+            activity.datasets[0].data.unshift([date, parseFloat(row.field1)]);
+            activity.datasets[1].data.unshift([date, parseFloat(row.field2)]);
+            activity.datasets[2].data.unshift([date, parseFloat(row.field3)]);
+            
+          });
+
+          $.each(activity.datasets, function (i, dataset) {
+            // Add X values
+            $('<div class="chart">')
+                .appendTo('#container')
+                .highcharts({
+                    chart: {
+                        marginLeft: 40, // Keep all charts left aligned
+                        spacingTop: 20,
+                        spacingBottom: 20
+                    },
+                    title: {
+                        text: dataset.name,
+                        align: 'left',
+                        margin: 0,
+                        x: 30
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    xAxis: {
+                        crosshair: true,
+                        events: {
+                            setExtremes: syncExtremes
+                        },
+                        type: 'datetime'
+                    },
+                    yAxis: {
+                        title: {
+                            text: null
+                        }
+                    },
+                    tooltip: {
+                        borderWidth: 0,
+                        backgroundColor: 'none',
+                        formatter: function() {
+                            return  '<b>' + Highcharts.numberFormat(this.y, dataset.valueDecimals) + dataset.unit + '</b><br> ' +
+                                    Highcharts.dateFormat('%d %b %H:%M', this.x);
+                        },
+                        headerFormat: '',
+                        shadow: false,
+                        style: {
+                            fontSize: '18px'
+                        }
+                    },
+                    series: [{
+                        data: dataset.data,
+                        name: dataset.name,
+                        type: dataset.type,
+                        lineWidth: 0,
+                        marker: {
+                          enabled: true,
+                          radius: 2
+                        },
+                        states: {
+                          hover: {
+                            lineWidthPlus: 0
+                          }
+                        },
+                        color: Highcharts.getOptions().colors[i],
+                        fillOpacity: 0.3,
+                        tooltip: {
+                            valueSuffix: dataset.unit
+                        }
+                    }]
+                });
+        });
+    });
+
+
+});
+     
+
+
+
+</script>
+
+  </head>
+  <body bgcolor="#3e3e40">
+    <div id="container" style="width: 100%;"></div>
+  </body>
+</html>
+
