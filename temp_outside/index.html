@@ -22,7 +22,6 @@
   var numberOfDays = isNaN(param) ? 1 : param;
   
   var dataSample = numberOfDays * 6 * 24;
-  console.log(dataSample)
 
   // variables for the first series
   var channel_id = 199616;
@@ -118,11 +117,10 @@ $(function () {
       }).done(function (results) {
           $.each(results.feeds, function (i, row) {
             date = getChartDate(row.created_at);
-            console.log(date + " " + row.field1 + " " + row.field2 + " " + row.field3)
             
-            activity.datasets[0].data.unshift([date, parseFloat(row.field1)]);
-            activity.datasets[1].data.unshift([date, parseFloat(row.field2)]);
-            activity.datasets[2].data.unshift([date, parseFloat(row.field3)]);
+            activity.datasets[0].data.push([date, parseFloat(row.field1)]);
+            activity.datasets[1].data.push([date, parseFloat(row.field2)]);
+            activity.datasets[2].data.push([date, parseFloat(row.field3)]);
             
           });
 
@@ -153,12 +151,25 @@ $(function () {
                         events: {
                             setExtremes: syncExtremes
                         },
-                        type: 'datetime'
+                        type: 'datetime',
+                        tickInterval: 12 * 3600 * 1000,
+                        tickWidth: 0,
+                        gridLineWidth: 1,
+                        labels: {
+                            align: 'left',
+                            x: 3,
+                            y: -3
+                        }
                     },
                     yAxis: {
                         title: {
                             text: null
-                        }
+                        },
+                        plotBands: [{
+                            from: 0,
+                            to: -50,
+                            color: 'rgba(255, 100, 100, 0.1)'
+                        }]
                     },
                     tooltip: {
                         borderWidth: 0,
