@@ -149,7 +149,15 @@ $(function () {
                         events: {
                             setExtremes: syncExtremes
                         },
-                        type: 'datetime'
+                        type: 'datetime',
+                        tickInterval: 12 * 3600 * 1000,
+                        tickWidth: 1,
+                        gridLineWidth: 1,
+                        labels: {
+                            align: 'left',
+                            x: 3,
+                            y: -3
+                        }
                     },
                     yAxis: {
                         title: {
