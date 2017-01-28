@@ -173,6 +173,16 @@ $(function () {
                         data: dataset.data,
                         name: dataset.name,
                         type: dataset.type,
+                        lineWidth: 0,
+                        marker: {
+                            enabled: true,
+                            radius: 1
+                        },
+                        states: {
+                            hover: {
+                                lineWidthPlus: 0
+                            }
+                        },
                         color: Highcharts.getOptions().colors[i],
                         fillOpacity: 0.3,
                         tooltip: {
