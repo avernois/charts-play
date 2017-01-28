@@ -104,16 +104,16 @@ $(function () {
         "unit": "%",
         "type": "line",
         "valueDecimals": 1
+    },{
+        "name": "dew point",
+        "data": [],
+        "unit": '°C',
+        "type": "line",
+        "valueDecimals": 1
     }, {
         "name": "in",
         "data": [],
         "unit": 'V',
-        "type": "line",
-        "valueDecimals": 1
-    },{
-        "name": "dew",
-        "data": [],
-        "unit": '°C',
         "type": "line",
         "valueDecimals": 1
     }]}
@@ -137,8 +137,8 @@ $(function () {
 
             activity.datasets[0].data.push([date, parseFloat(temp)]);
             activity.datasets[1].data.push([date, parseFloat(rh)]);
-            activity.datasets[2].data.push([date, parseFloat(vin)]);    
-            activity.datasets[3].data.push([date, dewPoint(temp, rh)]);
+            activity.datasets[2].data.push([date, dewPoint(temp, rh)]);
+            activity.datasets[3].data.push([date, parseFloat(vin)]);    
           });
 
           $.each(activity.datasets, function (i, dataset) {
