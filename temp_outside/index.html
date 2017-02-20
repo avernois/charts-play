@@ -92,13 +92,16 @@
                 "data": [],
                 "unit": '°C',
                 "type": "line",
-                "valueDecimals": 1
+                "valueDecimals": 1,
+                "ymin": -10,
+                "ymax": 35
             }, {
                 "name": "humidity",
                 "data": [],
                 "unit": "%",
                 "type": "line",
-                "valueDecimals": 1
+                "valueDecimals": 1,
+                "ymax": 100
             },{
                 "name": "dew point",
                 "data": [],
@@ -110,7 +113,9 @@
                 "data": [],
                 "unit": 'V',
                 "type": "line",
-                "valueDecimals": 1
+                "valueDecimals": 1,
+                "ymin":3,
+                "ymax":3.5
             }]};
 
             var my_offset = new Date().getTimezoneOffset();
@@ -180,7 +185,9 @@
                                 from: 0,
                                 to: -50,
                                 color: 'rgba(255, 100, 100, 0.1)'
-                            }]
+                            }],
+                            min: dataset.ymin,
+                            max: dataset.ymax
                         },
                         tooltip: {
                             borderWidth: 0,
