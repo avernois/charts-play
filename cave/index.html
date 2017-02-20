@@ -7,7 +7,7 @@
 
 <style>
 .chart {
-    height: 220px;
+    height: 400px;
     margin: 0 auto;
 }
 </style>
@@ -82,31 +82,20 @@ $(function () {
 
 
     activity = {
-    "datasets": [{
-        "name": "Humidity dht22",
-        "data": [],
-        "unit": "%",
-        "type": "line",
-        "valueDecimals": 1
-    }, {
-        "name": "Temp dht22",
-        "data": [],
-        "unit": '°C',
-        "type": "line",
-        "valueDecimals": 1
-    }, {
-        "name": "Humidity si7021",
-        "data": [],
-        "unit": "%",
-        "type": "line",
-        "valueDecimals": 1
-    }, {
-        "name": "Temp si7021",
-        "data": [],
-        "unit": '°C',
-        "type": "line",
-        "valueDecimals": 1
-    }]}
+        "datasets": [{
+            "name": "Humidity dht22",
+            "data": [],
+            "unit": "%",
+            "type": "line",
+            "valueDecimals": 1
+        }, {
+            "name": "Temp dht22",
+            "data": [],
+            "unit": '°C',
+            "type": "line",
+            "valueDecimals": 1
+        }
+    ]};
 
     var jsonData = $.ajax({
           url: 'https://api.thingspeak.com/channels/' + channel_id + '/feeds.json?results=' + dataSample,
@@ -117,8 +106,6 @@ $(function () {
             if (row.field3 > -999) {
                 activity.datasets[0].data.push([date, parseFloat(row.field1)]);
                 activity.datasets[1].data.push([date, parseFloat(row.field3)]);
-                activity.datasets[2].data.push([date, parseFloat(row.field2)]);
-                activity.datasets[3].data.push([date, parseFloat(row.field4)]);
             }
           });
 
