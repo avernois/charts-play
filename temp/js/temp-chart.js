@@ -1,24 +1,10 @@
-<!DOCTYPE htmlC>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="dark-unica.js"></script>
+const build_chart = function (channel_id) {
 
-    <style>
-        .chart {
-            height: 300px;
-            margin: 0 auto;
-        }
-    </style>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <script>
         var param = parseInt(window.location.hash.substring(1));
         var numberOfDays = isNaN(param) ? 1 : param;
-        var channel_id = 217762;
+        
 
         function dewPoint(t, rh) {
             var b = 237.7;
@@ -224,13 +210,6 @@
                     });
                 });
             });
-        });        
-    </script>
+        });
 
-</head>
-
-<body bgcolor="#3e3e40">
-    <div id="container" style="width: 100%;"></div>
-</body>
-</html>
-
+}
