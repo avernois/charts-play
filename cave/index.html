@@ -97,12 +97,19 @@ $(function () {
         }
     ]};
 
+    var my_offset = new Date().getTimezoneOffset();
+            
+    function getChartDate(d) {
+        // offset in minutes is converted to milliseconds and subtracted so that chart's x-axis is correct
+        return Date.parse(d) - (my_offset * 60000);
+    }
+
     var jsonData = $.ajax({
           url: 'https://api.thingspeak.com/channels/' + channel_id + '/feeds.json?results=' + dataSample,
           dataType: 'jsonp',
       }).done(function (results) {
           $.each(results.feeds, function (i, row) {
-            date = Date.parse(row.created_at);
+            date = getChartDate(row.created_at);
             if (row.field3 > -999) {
                 activity.datasets[0].data.push([date, parseFloat(row.field1)]);
                 activity.datasets[1].data.push([date, parseFloat(row.field3)]);
