@@ -97,7 +97,7 @@ const build_chart = function (channel_id) {
                 "data": [],
                 "unit": 'V',
                 "type": "line",
-                "valueDecimals": 1,
+                "valueDecimals": 3,
                 "ymin":3,
                 "ymax":3.5
             }]};
