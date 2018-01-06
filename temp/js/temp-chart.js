@@ -118,7 +118,7 @@ const build_chart = function (channel_id) {
                     var temp = parseFloat(row.field1);
                     var rh = parseFloat(row.field2);
                     var vin = parseFloat(row.field3);
-                    if(temp < 100 && rh <= 100) {
+                    if(temp < 100) {
                         activity.datasets[0].data.push([date, temp]);
                         activity.datasets[1].data.push([date, rh]);
                         activity.datasets[2].data.push([date, dewPoint(temp, rh)]);
