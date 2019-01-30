@@ -1,0 +1,76 @@
+<link href="style.css" rel="stylesheet" type="text/css" media="all">
+
+<body id="app">
+    <div class="container" id="container">
+
+    </div>
+
+    <template id="template">
+        <div class="data">
+            <h4><span id="location"></span></h4>
+            <h1><span id="temperature"></span><span id="deg">&deg;</span></h1>    
+            <p><span id="humidity"></span><span>%</span></p>
+        </div>
+    </template>
+</body>
+
+<script>
+    var load = function(channels) {
+        var template = document.querySelector("#template");
+        var container = document.getElementById("container");
+ 
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+        channels.forEach(channel => {
+            load_data(channel, template)
+        });
+    }
+
+    var load_data = function(channel, template) {
+        var clone = document.importNode(template.content, true)
+        var tempDiv = clone.getElementById("temperature");
+        var humiDiv = clone.getElementById("humidity");
+        var locaDiv = clone.getElementById("location");
+        var container = document.getElementById("container");
+
+        var url = "http://api.thingspeak.com/channels/" + channel.id +"/feeds.json?results=1"
+        fetch(url, { method: 'GET' })
+
+        .then(function(response) {
+            console.log('status: ' + response.statusText + ' ' + response.ok)
+        return response.json()
+        })
+        .then(function(myBlob) {
+            tempDiv.innerText = parseFloat(myBlob.feeds[0].field1).toFixed(1);
+            humiDiv.innerText = parseFloat(myBlob.feeds[0].field2).toFixed(1);
+            locaDiv.innerText = channel.name
+            container.appendChild(clone);
+        });
+    }
+
+    var channels = [
+        { 
+            id: 217762,
+            name: "terrasse"
+        },
+        {
+            id: 689000,
+            name: "bureau"
+        },
+        {
+            id: 199616,
+            name: "atelier"
+        }
+    ]
+
+
+    load(channels)
+    setInterval(function()
+    {
+        load(channels)
+    
+    }, 10 * 60 * 1000);
+
+
+</script>
