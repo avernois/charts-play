@@ -1,0 +1,22 @@
+#app {
+    background: #333333;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  
+.container{
+    display: flex;
+}
+
+.data{
+    font-size: 200%;
+    width: 300px;
+    margin: 10px;
+    border-style: solid;
+    border-radius: 30px;
+    align-content: center;
+    text-align: center;
+}
