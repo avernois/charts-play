@@ -20,3 +20,10 @@
     align-content: center;
     text-align: center;
 }
+
+.alert{
+    border-color: red;
+}
+.recent{
+    border-color: green;
+}
