@@ -42,6 +42,14 @@
         return response.json()
         })
         .then(function(myBlob) {
+            created = new Date(myBlob.feeds[0].created_at)
+            ellapsed = Date.now() - created
+            if(ellapsed > 60 * 60 * 1000) {
+                clone.querySelector('.data').classList.add('alert');
+            }
+            if(ellapsed < 10 * 60 * 1000) {
+                clone.querySelector('.data').classList.add('recent');
+            }
             tempDiv.innerText = parseFloat(myBlob.feeds[0].field1).toFixed(1);
             humiDiv.innerText = parseFloat(myBlob.feeds[0].field2).toFixed(1);
             locaDiv.innerText = channel.name
