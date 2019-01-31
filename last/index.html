@@ -34,7 +34,7 @@
         var locaDiv = clone.getElementById("location");
         var container = document.getElementById("container");
 
-        var url = "http://api.thingspeak.com/channels/" + channel.id +"/feeds.json?results=1"
+        var url = "https://api.thingspeak.com/channels/" + channel.id +"/feeds.json?results=1"
         fetch(url, { method: 'GET' })
 
         .then(function(response) {
