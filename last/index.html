@@ -1,10 +1,17 @@
 <link href="style.css" rel="stylesheet" type="text/css" media="all">
 
 <body id="app">
-    <div class="container" id="container">
 
+    <div class="container" id="container">
+        <div class=data-container></div>
+        <div class="footer">
+            <p><small>last update: <span class="update"></span></small></p>
+
+        </div>
     </div>
 
+    
+    </div>
     <template id="template">
         <div class="data">
             <h4><span class="location"></span></h4>
@@ -18,7 +25,7 @@
 <script>
     var init_display = function(channels) {
         var template = document.querySelector("#template");
-        var container = document.getElementById("container");
+        var container = document.querySelector(".data-container");
         channels.forEach(channel => {
             var clone = document.importNode(template.content, true)
             var newDiv = document.createElement("div");
@@ -89,17 +96,22 @@
         }
     ]
 
+    var display_last_update = function(date) {
+        document.querySelector('.update').innerText = date.toLocaleString();
+
+    } 
+
     var update_channels = function(channels) {
         channels.forEach(channel => update_data(channel));
+        display_last_update(new Date())
     };
     
     init_display(channels)
-    
     update_channels(channels)
+
     setInterval(function()
     {
         update_channels(channels)
-    
     }, 10 * 60 * 1000);
 
 
