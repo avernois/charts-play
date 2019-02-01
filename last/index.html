@@ -10,6 +10,7 @@
             <h4><span class="location"></span></h4>
             <h1><span class="temperature"></span><span id="deg">&deg;</span></h1>    
             <p><span class="humidity"></span><span>%</span></p>
+            <p><small><span class="battery"></span></small></p>
         </div>
     </template>
 </body>
@@ -47,6 +48,16 @@
         humiDiv.innerText = parseFloat(feed.field2).toFixed(1);
     }
 
+    var display_battery = function (feed, element) {
+        var batteryDiv = element.querySelector(".battery")
+        var vcc = parseFloat(feed.field3).toFixed(1);
+        
+        if (vcc > 3.3)
+            batteryDiv.innerText = ""
+        else
+            batteryDiv.innerText = "battery low"
+    }
+
     var update_data = function (channel) {
         var url = "https://api.thingspeak.com/channels/" + channel.id +"/feeds.json?results=1"
         
@@ -55,9 +66,11 @@
             return response.json()
         })
         .then(function(myBlob) {
+            console.log(myBlob)
             var element = document.querySelector("." + channel.name)
             display_status(myBlob.feeds[0], element);
             display_temp(myBlob.feeds[0], element);
+            display_battery(myBlob.feeds[0], element);
         });
     }
 
