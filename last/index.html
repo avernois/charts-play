@@ -7,53 +7,57 @@
 
     <template id="template">
         <div class="data">
-            <h4><span id="location"></span></h4>
-            <h1><span id="temperature"></span><span id="deg">&deg;</span></h1>    
-            <p><span id="humidity"></span><span>%</span></p>
+            <h4><span class="location"></span></h4>
+            <h1><span class="temperature"></span><span id="deg">&deg;</span></h1>    
+            <p><span class="humidity"></span><span>%</span></p>
         </div>
     </template>
 </body>
 
 <script>
-    var load = function(channels) {
+    var init_display = function(channels) {
         var template = document.querySelector("#template");
         var container = document.getElementById("container");
- 
-        while (container.firstChild) {
-            container.removeChild(container.firstChild);
-        }
         channels.forEach(channel => {
-            load_data(channel, template)
+            var clone = document.importNode(template.content, true)
+            var newDiv = document.createElement("div");
+            newDiv.classList.add(channel.name)
+            newDiv.appendChild(clone);
+            newDiv.querySelector('.location').innerText = channel.name
+            container.appendChild(newDiv);
         });
     }
 
-    var load_data = function(channel, template) {
-        var clone = document.importNode(template.content, true)
-        var tempDiv = clone.getElementById("temperature");
-        var humiDiv = clone.getElementById("humidity");
-        var locaDiv = clone.getElementById("location");
-        var container = document.getElementById("container");
+    var display_status = function (feed, element) {
+        created = new Date(feed.created_at)
+        ellapsed = Date.now() - created
+        if(ellapsed > 60 * 60 * 1000) {
+            element.querySelector(".data").classList.add('alert');
+        }
+        if(ellapsed < 10 * 60 * 1000) {
+            element.querySelector(".data").classList.add('recent');
+        }
+    }
 
+    var display_temp = function (feed, element) {
+        var tempDiv = element.querySelector(".temperature")
+        tempDiv.innerText = parseFloat(feed.field1).toFixed(1);
+
+        var humiDiv = element.querySelector(".humidity")
+        humiDiv.innerText = parseFloat(feed.field2).toFixed(1);
+    }
+
+    var update_data = function (channel) {
         var url = "https://api.thingspeak.com/channels/" + channel.id +"/feeds.json?results=1"
+        
         fetch(url, { method: 'GET' })
-
         .then(function(response) {
-            console.log('status: ' + response.statusText + ' ' + response.ok)
-        return response.json()
+            return response.json()
         })
         .then(function(myBlob) {
-            created = new Date(myBlob.feeds[0].created_at)
-            ellapsed = Date.now() - created
-            if(ellapsed > 60 * 60 * 1000) {
-                clone.querySelector('.data').classList.add('alert');
-            }
-            if(ellapsed < 10 * 60 * 1000) {
-                clone.querySelector('.data').classList.add('recent');
-            }
-            tempDiv.innerText = parseFloat(myBlob.feeds[0].field1).toFixed(1);
-            humiDiv.innerText = parseFloat(myBlob.feeds[0].field2).toFixed(1);
-            locaDiv.innerText = channel.name
-            container.appendChild(clone);
+            var element = document.querySelector("." + channel.name)
+            display_status(myBlob.feeds[0], element);
+            display_temp(myBlob.feeds[0], element);
         });
     }
 
@@ -72,11 +76,16 @@
         }
     ]
 
-
-    load(channels)
+    var update_channels = function(channels) {
+        channels.forEach(channel => update_data(channel));
+    };
+    
+    init_display(channels)
+    
+    update_channels(channels)
     setInterval(function()
     {
-        load(channels)
+        update_channels(channels)
     
     }, 10 * 60 * 1000);
 
