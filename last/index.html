@@ -39,6 +39,7 @@
     var display_status = function (feed, element) {
         created = new Date(feed.created_at)
         ellapsed = Date.now() - created
+        element.querySelector(".data").classList.remove("alert", 'recent')
         if(ellapsed > 60 * 60 * 1000) {
             element.querySelector(".data").classList.add('alert');
         }
