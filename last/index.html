@@ -60,7 +60,7 @@
         var batteryDiv = element.querySelector(".battery")
         var vcc = parseFloat(feed.field3).toFixed(1);
         
-        if (vcc > 3.3)
+        if (vcc >= 3.3)
             batteryDiv.innerText = ""
         else
             batteryDiv.innerText = "battery low"
