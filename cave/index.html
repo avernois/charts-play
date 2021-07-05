@@ -1,210 +1,134 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="dark-unica.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.1/chart.min.js" integrity="sha512-5vwN8yor2fFT9pgPS9p9R7AszYaNn0LkQElTXIsZFCL7ucT8zDCAqlQXDdaqgA1mZP47hdvztBMsIoFxq/FyyQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@0.1.1"></script>
+    
+    <script>
+        var channel_id = 211219 ;
+        var param = parseInt(window.location.hash.substring(1));
+        var numberOfDays = isNaN(param) ? 7 : param;
+        
+        var dataSample = numberOfDays * 30 * 24;
+        
 
-<style>
-.chart {
-    height: 400px;
-    margin: 0 auto;
-}
-</style>
-<!-- http://doc.jsfiddle.net/use/hacks.html#css-panel-hack -->
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-
-
-
-<script>
-var channel_id = 211219 ;
-var param = parseInt(window.location.hash.substring(1));
-var numberOfDays = isNaN(param) ? 7 : param;
-  
-var dataSample = numberOfDays * 30 * 24;
-  console.log(dataSample)
-
-$(function () {
-
-    /**
-     * In order to synchronize tooltips and crosshairs, override the
-     * built-in events with handlers defined on the parent element.
-     */
-    $('#container').bind('mousemove touchmove touchstart', function (e) {
-        var chart,
-            point,
-            i,
-            event;
-
-        for (i = 0; i < Highcharts.charts.length; i = i + 1) {
-            chart = Highcharts.charts[i];
-            event = chart.pointer.normalize(e.originalEvent); // Find coordinates within the chart
-            point = chart.series[0].searchPoint(event, true); // Get the hovered point
-
-            if (point) {
-                point.highlight(e);
-            }
-        }
-    });
-    /**
-     * Override the reset function, we don't need to hide the tooltips and crosshairs.
-     */
-    Highcharts.Pointer.prototype.reset = function () {
-        return undefined;
-    };
-
-    /**
-     * Highlight a point by showing tooltip, setting hover state and draw crosshair
-     */
-    Highcharts.Point.prototype.highlight = function (event) {
-        this.onMouseOver(); // Show the hover marker
-        this.series.chart.tooltip.refresh(this); // Show the tooltip
-        this.series.chart.xAxis[0].drawCrosshair(event, this); // Show the crosshair
-    };
-
-    /**
-     * Synchronize zooming through the setExtremes event handler.
-     */
-    function syncExtremes(e) {
-        var thisChart = this.chart;
-
-        if (e.trigger !== 'syncExtremes') { // Prevent feedback loop
-            Highcharts.each(Highcharts.charts, function (chart) {
-                if (chart !== thisChart) {
-                    if (chart.xAxis[0].setExtremes) { // It is null while updating
-                        chart.xAxis[0].setExtremes(e.min, e.max, undefined, false, { trigger: 'syncExtremes' });
-                    }
-                }
-            });
-        }
-    }
-
-
-
-    activity = {
-        "datasets": [{
-            "name": "Humidity dht22",
-            "data": [],
-            "unit": "%",
-            "type": "line",
-            "valueDecimals": 1
-        }, {
-            "name": "Temp dht22",
-            "data": [],
-            "unit": '°C',
-            "type": "line",
-            "valueDecimals": 1
-        }
-    ]};
-
-    var my_offset = new Date().getTimezoneOffset();
-            
-    function getChartDate(d) {
-        // offset in minutes is converted to milliseconds and subtracted so that chart's x-axis is correct
-        return Date.parse(d) - (my_offset * 60000);
-    }
-
-    var jsonData = $.ajax({
-          url: 'https://api.thingspeak.com/channels/' + channel_id + '/feeds.json?results=' + dataSample,
-          dataType: 'jsonp',
-      }).done(function (results) {
-          $.each(results.feeds, function (i, row) {
-            date = getChartDate(row.created_at);
-            if (row.field3 > -999) {
-                activity.datasets[0].data.push([date, parseFloat(row.field1)]);
-                activity.datasets[1].data.push([date, parseFloat(row.field3)]);
-            }
-          });
-
-          $.each(activity.datasets, function (i, dataset) {
-            // Add X values
-            $('<div class="chart">')
-                .appendTo('#container')
-                .highcharts({
-                    chart: {
-                        marginLeft: 40, // Keep all charts left aligned
-                        spacingTop: 20,
-                        spacingBottom: 20
-                    },
-                    title: {
-                        text: dataset.name,
-                        align: 'left',
-                        margin: 0,
-                        x: 30
-                    },
-                    credits: {
-                        enabled: false
-                    },
-                    legend: {
-                        enabled: false
-                    },
-                    xAxis: {
-                        crosshair: true,
-                        events: {
-                            setExtremes: syncExtremes
-                        },
-                        type: 'datetime',
-                        tickInterval: 12 * 3600 * 1000,
-                        tickWidth: 1,
-                        gridLineWidth: 1,
-                        labels: {
-                            align: 'left',
-                            x: 3,
-                            y: -3
-                        }
-                    },
-                    yAxis: {
-                        title: {
-                            text: null
-                        }
-                    },
-                    tooltip: {
-                        borderWidth: 0,
-                        backgroundColor: 'none',
-                        formatter: function() {
-                            return  '<b>' + Highcharts.numberFormat(this.y, dataset.valueDecimals) + dataset.unit + '</b><br> ' +
-                                    Highcharts.dateFormat('%d %b %H:%M', this.x);
-                        },
-                        headerFormat: '',
-                        shadow: false,
-                        style: {
-                            fontSize: '18px'
-                        }
-                    },
-                    series: [{
-                        data: dataset.data,
-                        name: dataset.name,
-                        type: dataset.type,
-                        lineWidth: 0,
-                        marker: {
-                            enabled: true,
-                            radius: 1
-                        },
-                        states: {
-                            hover: {
-                                lineWidthPlus: 0
-                            }
-                        },
-                        color: Highcharts.getOptions().colors[i],
-                        fillOpacity: 0.3,
-                        tooltip: {
-                            valueSuffix: dataset.unit
-                        }
-                    }]
-                });
-        });
-    });
-
-
-});
-     
-
-
-
-</script>
+    </script>
 
 </head>
 
-<body bgcolor="#3e3e40">
-    <div id="container"></div>
-</body>
+<body>
+    <div class="chart-container" style="position: relative; height:40vh; width:80vw">
+        <canvas id="myChart"></canvas>
+    </div>
+    
+    
+    <script>
+
+    var update_data = function (channel, nbData, datasets) {
+        var url = "https://api.thingspeak.com/channels/" + channel +"/feeds.json?results=" + nbData
+    
+        fetch(url, { method: 'GET' })
+        .then(function(response) {
+            return response.json()
+        })
+        .then(function(json) {
+            console.log("json", json)
+
+            const feeds = json.feeds
+            feeds.forEach(element => {
+                if(element.entry_id % 15 == 0) {
+                    datasets.temp.push({x: moment(element.created_at), y: element.field3 })
+                    datasets.humidity.push({x: moment(element.created_at), y: element.field1 })
+                }
+            });
+
+            var ctx = document.getElementById('myChart');
+
+            const data = {
+                datasets: [
+                    {
+                        label: 'Temp',
+                        data: datasets.temp,
+                        borderColor: 'rgba(255, 0, 0, 1)',
+                        backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                        yAxisID: 'tempAxis',
+                    },
+                    {
+                        label: 'Humidity',
+                        data: datasets.humidity,
+                        borderColor: 'rgba(0, 0, 255, 1)',
+                        yAxisID: 'humidityAxis',
+                    }
+                ]
+            };
+
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    stacked: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            display: true,
+                            distribution: 'linear',
+                            ticks: {
+                                autoskip: true,
+                                source: 'data',
+                                major: {
+                                    enabled: true
+                                },
+                            }
+                        },
+                        tempAxis: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            suggestedMin: -10,
+                            suggestedMax: 40,
+                            ticks: {
+                                color: '#FF0000'
+                            },
+                        },
+                        humidityAxis: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: {
+                                color: '#0000FF'
+                            },
+                            // grid line settings
+                            grid: {
+                                drawOnChartArea: false, // only want the grid lines for one axis to show up
+                            },
+                            color: '#00FF00'
+                        },
+                    }
+                },
+            };
+
+
+
+            var myChart = new Chart(ctx, config);
+        });
+    }
+
+    humidityTempData = { temp: [], humidity: [] }
+
+    update_data(channel_id, dataSample, humidityTempData);
+
+
+    console.log("humidityTempData", humidityTempData);
+    
+    // data: [{x:'2016-12-25', y:20}, {x:'2016-12-26', y:10}]
+
+    
+    </script>
+    </body>
