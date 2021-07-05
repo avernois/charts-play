@@ -15,18 +15,32 @@
 
     </script>
 
+
+    <style>
+        body {
+            background-color: #3e3e40;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="chart-container" style="position: relative; height:40vh; width:80vw">
-        <canvas id="myChart"></canvas>
-    </div>
-    
+    <canvas id="myChart" style="background: #3e3e40"></canvas>
     
     <script>
 
+    var chartColors = {
+        red: 'rgb(255, 99, 132)',
+        orange: 'rgb(255, 159, 64)',
+        yellow: 'rgb(255, 205, 86)',
+        green: 'rgb(75, 192, 192)',
+        blue: 'rgb(54, 162, 235)',
+        purple: 'rgb(153, 102, 255)',
+        grey: 'rgb(231,233,237)'
+    };
+
+
     var update_data = function (channel, nbData, datasets) {
-        var url = "https://api.thingspeak.com/channels/" + channel +"/feeds.json?results=" + nbData
+        var url = "https://api.thingspeak.com/channels/" + channel +"/feeds.json?results=" + nbData +"&average=60&round=1"
     
         fetch(url, { method: 'GET' })
         .then(function(response) {
@@ -37,29 +51,27 @@
 
             const feeds = json.feeds
             feeds.forEach(element => {
-                if(element.entry_id % 15 == 0) {
                     datasets.temp.push({x: moment(element.created_at), y: element.field3 })
                     datasets.humidity.push({x: moment(element.created_at), y: element.field1 })
-                }
             });
-
-            var ctx = document.getElementById('myChart');
 
             const data = {
                 datasets: [
+                {
+                        label: 'Humidity',
+                        data: datasets.humidity,
+                        borderColor: chartColors.blue,
+                        pointBackgroundColor: chartColors.blue,
+                        yAxisID: 'humidityAxis',
+                    },
                     {
                         label: 'Temp',
                         data: datasets.temp,
-                        borderColor: 'rgba(255, 0, 0, 1)',
-                        backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                        borderColor: chartColors.red,
+                        pointBackgroundColor: chartColors.red,
                         yAxisID: 'tempAxis',
                     },
-                    {
-                        label: 'Humidity',
-                        data: datasets.humidity,
-                        borderColor: 'rgba(0, 0, 255, 1)',
-                        yAxisID: 'humidityAxis',
-                    }
+                    
                 ]
             };
 
@@ -72,50 +84,66 @@
                         intersect: false
                     },
                     stacked: false,
-                    scales: {
+                    scales: {    
                         x: {
                             type: 'time',
-                            display: true,
-                            distribution: 'linear',
-                            ticks: {
-                                autoskip: true,
-                                source: 'data',
-                                major: {
-                                    enabled: true
-                                },
-                            }
-                        },
-                        tempAxis: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            suggestedMin: -10,
-                            suggestedMax: 40,
-                            ticks: {
-                                color: '#FF0000'
+                            time: {
+                                stepSize: 6,
+                                tooltipFormat: 'HH:mm',
+                                displayFormats: {
+                                    day: 'MMMM Do, YY',
+                                    hour: 'HH:mm'
+                                }
                             },
+                            grid: {
+                                color: chartColors.grey,
+                            },
+                            ticks: {
+                                major: {
+                                    enabled: true, // <-- This is the key line
+                                    fontStyle: 'bold', //You can also style these values differently
+                                },
+                                color: chartColors.grey
+                            },                
                         },
                         humidityAxis: {
                             type: 'linear',
                             display: true,
-                            position: 'right',
-                            suggestedMin: 0,
+                            position: 'left',
+                            suggestedMin: 50,
                             suggestedMax: 100,
                             ticks: {
-                                color: '#0000FF'
+                                color: chartColors.blue
                             },
-                            // grid line settings
+                            grid: {
+                                color: function(context) {
+                                    if (context.tick.value > 72 && context.tick.value < 92 ) {
+                                        return chartColors.green;
+                                    }
+
+                                    return chartColors.blue;
+                                },
+                            },
+                        },
+                        tempAxis: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            suggestedMin: -10,
+                            suggestedMax: 40,
+                            ticks: {
+                                color: chartColors.red
+                            },
                             grid: {
                                 drawOnChartArea: false, // only want the grid lines for one axis to show up
+                                color: 'white'
                             },
-                            color: '#00FF00'
                         },
                     }
                 },
             };
-
-
-
+            Chart.defaults.font.size = 22;
+            var ctx = document.getElementById('myChart');
             var myChart = new Chart(ctx, config);
         });
     }
