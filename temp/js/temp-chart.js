@@ -1,215 +1,124 @@
-const build_chart = function (channel_id) {
+function amcharts(channel) {
+    var param = parseInt(window.location.hash.substring(1));
+    var numberOfDays = isNaN(param) ? 15 : param;
 
-
-
-        var param = parseInt(window.location.hash.substring(1));
-        var numberOfDays = isNaN(param) ? 1 : param;
+    am4core.ready(function() {
+    
+        // Themes begin
+        am4core.useTheme(am4themes_dark);
+        am4core.useTheme(am4themes_animated);
+        // Themes end
         
-
-        function dewPoint(t, rh) {
-            var b = 237.7;
-            var a = 17.27;
-            var alpha = a*t/(b+t) + Math.log(rh/100);
-
-            return b*alpha / (a - alpha); 
-        }
-
-        $(function () {
-
-        /**
-        * In order to synchronize tooltips and crosshairs, override the
-        * built-in events with handlers defined on the parent element.
-        */
-            $('#container').bind('mousemove touchmove touchstart', function (e) {
-                var chart,
-                    point,
-                    i,
-                    event;
-
-                for (i = 0; i < Highcharts.charts.length; i = i + 1) {
-                    chart = Highcharts.charts[i];
-                    event = chart.pointer.normalize(e.originalEvent); // Find coordinates within the chart
-                    point = chart.series[0].searchPoint(event, true); // Get the hovered point
-
-                    if (point) {
-                        point.highlight(e);
-                    }
-                }
-            });
-
-            /**
-            * Override the reset function, we don't need to hide the tooltips and crosshairs.
-            */
-            Highcharts.Pointer.prototype.reset = function () {
-                return undefined;
-            };
-
-            /**
-            * Highlight a point by showing tooltip, setting hover state and draw crosshair
-            */
-            Highcharts.Point.prototype.highlight = function (event) {
-                this.onMouseOver(); // Show the hover marker
-                this.series.chart.tooltip.refresh(this); // Show the tooltip
-                this.series.chart.xAxis[0].drawCrosshair(event, this); // Show the crosshair
-            };
-
-            /**
-            * Synchronize zooming through the setExtremes event handler.
-            */
-            function syncExtremes(e) {
-                var thisChart = this.chart;
-
-                if (e.trigger !== 'syncExtremes') { // Prevent feedback loop
-                    Highcharts.each(Highcharts.charts, function (chart) {
-                        if (chart !== thisChart) {
-                            if (chart.xAxis[0].setExtremes) { // It is null while updating
-                                chart.xAxis[0].setExtremes(e.min, e.max, undefined, false, { trigger: 'syncExtremes' });
-                            }
-                        }
-                    });
-                }
-            }
-
-            activity = {
-                "datasets": [{
-                "name": "temp",
-                "data": [],
-                "unit": '°C',
-                "type": "line",
-                "valueDecimals": 1,
-                "ymin": -10,
-                "ymax": 35
-            }, {
-                "name": "humidity",
-                "data": [],
-                "unit": "%",
-                "type": "line",
-                "valueDecimals": 1,
-                "ymax": 100
-            },{
-                "name": "dew point",
-                "data": [],
-                "unit": '°C',
-                "type": "line",
-                "valueDecimals": 1
-            }, {
-                "name": "in",
-                "data": [],
-                "unit": 'V',
-                "type": "line",
-                "valueDecimals": 3,
-                "ymin":3,
-                "ymax":3.5
-            }]};
-
-            var my_offset = new Date().getTimezoneOffset();
-            
-            function getChartDate(d) {
-                // offset in minutes is converted to milliseconds and subtracted so that chart's x-axis is correct
-                return Date.parse(d) - (my_offset * 60000);
-            }
-
-            var jsonData = $.ajax({
-                url: 'https://api.thingspeak.com/channels/' + channel_id + '/feeds.json?days=' + numberOfDays,
-                dataType: 'jsonp'
-            }).done(function (results) {
-                $.each(results.feeds, function (i, row) {
-                    var date = getChartDate(row.created_at);
-                    var temp = parseFloat(row.field1);
-                    var rh = parseFloat(row.field2);
-                    var vin = parseFloat(row.field3);
-                    if(temp < 100) {
-                        activity.datasets[0].data.push([date, temp]);
-                        activity.datasets[1].data.push([date, rh]);
-                        activity.datasets[2].data.push([date, dewPoint(temp, rh)]);
-                        activity.datasets[3].data.push([date, vin]);
-                    }
-                });
-
-                $.each(activity.datasets, function (i, dataset) {
-                    $('<div class="chart">')
-                    .appendTo('#container')
-                    .highcharts({
-                        chart: {
-                            marginLeft: 40, // Keep all charts left aligned
-                            spacingTop: 20,
-                            spacingBottom: 20
-                        },
-                        title: {
-                            text: dataset.name,
-                            align: 'left',
-                            margin: 0,
-                            x: 30
-                        },
-                        credits: {
-                            enabled: false
-                        },
-                        legend: {
-                            enabled: false
-                        },
-                        xAxis: {
-                            crosshair: true,
-                            events: {
-                                setExtremes: syncExtremes
-                            },
-                            type: 'datetime',
-                            tickInterval: 12 * 3600 * 1000,
-                            tickWidth: 0,
-                            gridLineWidth: 1,
-                            labels: {
-                                align: 'left',
-                                x: 3,
-                                y: -3
-                            }
-                        },
-                        yAxis: {
-                            title: {
-                                text: null
-                            },
-                            plotBands: [{
-                                from: 0,
-                                to: -50,
-                                color: 'rgba(255, 100, 100, 0.1)'
-                            }],
-                            min: dataset.ymin,
-                            max: dataset.ymax
-                        },
-                        tooltip: {
-                            borderWidth: 0,
-                            backgroundColor: 'none',
-                            formatter: function() {
-                                return  '<b>' + Highcharts.numberFormat(this.y, dataset.valueDecimals) + dataset.unit + '</b><br> ' +
-                                    Highcharts.dateFormat('%d %b %H:%M', this.x);
-                            },
-                            headerFormat: '',
-                            shadow: false,
-                            style: {
-                                fontSize: '18px'
-                            }
-                        },
-                        series: [{
-                            data: dataset.data,
-                            name: dataset.name,
-                            type: dataset.type,
-                            lineWidth: 0,
-                            marker: {
-                                enabled: true,
-                                radius: 2
-                            },
-                            states: {
-                                hover: {
-                                    lineWidthPlus: 0
-                                }
-                            },
-                            color: Highcharts.getOptions().colors[i],
-                            fillOpacity: 0.3,
-                            tooltip: {
-                                valueSuffix: dataset.unit
-                            }
-                        }]
-                    });
-                });
-            });
+        // Create chart instance
+        var chart = am4core.create("chartdiv", am4charts.XYChart);
+        
+        //
+        
+        // Increase contrast by taking evey second color
+        chart.colors.step = 2;
+        
+        // Add data
+        update_data(channel_id, numberOfDays).then(data => {
+            chart.data = data
+            createAxisAndSeries("temp", "Temp", false, "triangle", {min: -10, max: 45});
+            createAxisAndSeries("humidity", "Humidity", true, "circle", {min: 0, max: 110});
+            createAxisAndSeries("vcc", "Vcc", true, "rectangle", {min: 3, max: 4.5});
         });
-
+        
+        // Create axes
+        var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+        dateAxis.renderer.minGridDistance = 50;
+        dateAxis.tooltipDateFormat = "yyyy-MM-dd HH:mm";
+    
+        // Create series
+        function createAxisAndSeries(field, name, opposite, bullet, range) {
+          var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+          valueAxis.min = range.min;
+          valueAxis.max = range.max;
+          valueAxis.cursorTooltipEnabled = false
+          if(chart.yAxes.indexOf(valueAxis) != 0){
+              valueAxis.syncWithAxis = chart.yAxes.getIndex(0);
+          }
+          
+          var series = chart.series.push(new am4charts.LineSeries());
+          series.dataFields.valueY = field;
+          series.dataFields.dateX = "date";
+          series.strokeWidth = 2;
+          series.yAxis = valueAxis;
+          series.name = name;
+          series.tooltipText = "{name}: [bold]{valueY}[/]";
+          series.tensionX = 1;
+          series.tensionY = 1;
+          series.showOnInit = true;
+          
+          var interfaceColors = new am4core.InterfaceColorSet();
+          
+          switch(bullet) {
+            case "triangle":
+              var bullet = series.bullets.push(new am4charts.Bullet());
+              bullet.width = 12;
+              bullet.height = 12;
+              bullet.horizontalCenter = "middle";
+              bullet.verticalCenter = "middle";
+              
+              var triangle = bullet.createChild(am4core.Triangle);
+              triangle.stroke = interfaceColors.getFor("background");
+              triangle.strokeWidth = 2;
+              triangle.direction = "top";
+              triangle.width = 12;
+              triangle.height = 12;
+              break;
+            case "rectangle":
+              var bullet = series.bullets.push(new am4charts.Bullet());
+              bullet.width = 10;
+              bullet.height = 10;
+              bullet.horizontalCenter = "middle";
+              bullet.verticalCenter = "middle";
+              
+              var rectangle = bullet.createChild(am4core.Rectangle);
+              rectangle.stroke = interfaceColors.getFor("background");
+              rectangle.strokeWidth = 2;
+              rectangle.width = 10;
+              rectangle.height = 10;
+              break;
+            default:
+              var bullet = series.bullets.push(new am4charts.CircleBullet());
+              bullet.circle.stroke = interfaceColors.getFor("background");
+              bullet.circle.strokeWidth = 2;
+              break;
+          }
+          
+          valueAxis.renderer.line.strokeOpacity = 1;
+          valueAxis.renderer.line.strokeWidth = 2;
+          valueAxis.renderer.line.stroke = series.stroke;
+          valueAxis.renderer.labels.template.fill = series.stroke;
+          valueAxis.renderer.opposite = opposite;
+        }
+        
+        // Add legend
+        chart.legend = new am4charts.Legend();
+        
+        // Add cursor
+        chart.cursor = new am4charts.XYCursor();
+        
+        async function update_data(channel, numberOfDays) {
+            const url = "https://api.thingspeak.com/channels/" + channel +"/feeds.json?days=" + numberOfDays +"&average=60&round=1"
+            
+            const response = await fetch(url, { method: 'GET' })
+            const data = await response.json()
+            const chartData = []
+            const feeds = data.feeds
+            feeds.forEach(element => {
+                    chartData.push({
+                        date: new Date(element.created_at),
+                        temp: element.field1,
+                        humidity: element.field2,
+                        vcc: element.field3
+                    });
+                });
+    
+            return chartData;
+        }
+        
+        }); // end am4core.ready()
 }
