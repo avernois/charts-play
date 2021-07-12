@@ -2,27 +2,25 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="../js/dark-unica.js"></script>
+    <script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+    <script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+    <script src="https://cdn.amcharts.com/lib/4/themes/dark.js"></script>
+    <script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
     <script src="../js/temp-chart.js"></script>
 
     <style>
-        .chart {
-            height: 300px;
-            margin: 0 auto;
-        }
+        body { background-color: #30303d; color: #fff; }
+        #chartdiv { width: 100%; }
     </style>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <script>
-        build_chart(217762);
-    </script>
 </head>
 
-<body bgcolor="#3e3e40">
-    <div id="container" style="width: 100%;"></div>
+<body>
+    <script>
+        const channel_id=217762
+        amcharts(channel_id);
+    </script>
+
+    <div id="chartdiv"></div>
 </body>
 </html>
 
